@@ -1,0 +1,10 @@
+logs/*
+logs_new/*
+outputs/*
+results/*
+readme.md
+v1.csv
+sample.json
+submission_20.csv
+log.py
+__pycache__/*
