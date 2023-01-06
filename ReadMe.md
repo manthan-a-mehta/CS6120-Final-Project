@@ -37,10 +37,10 @@ set your self.output_dir to your current outputs folder to ensure your models ar
    
     Inside the train.sh file which is the main trin file, change the training file (data/train.csv), debug (1 or 0 to set if you are debugging or not), --log_file_path which is the file were it will store logs and --epochs to specify number of epochs. For example:
 
-'''
+```
 $ CUDA_VISIBLE_DEVICES=0 python3 main.py --train_file_path "data/train.csv" --debug 1 --epochs 1 --logging_file_name "logs_new/debugging.logs" 
 
-'''
+```
 
 7) Generate predictions on the test file. Make sure you have the same tokenizer that you used during your training in the config.py file. Execute this command and you will have the predictions inside submission.csv
 
