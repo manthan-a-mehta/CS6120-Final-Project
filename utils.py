@@ -8,6 +8,15 @@ import torch
 from iterstrat.ml_stratifiers import MultilabelStratifiedKFold 
 
 def MCRMSE(y_trues, y_preds):
+    """_summary_
+
+    Args:
+        y_trues (List): True Prediction
+        y_preds (List): False Prediction
+
+    Returns:
+        Float : Returns the mean RMSE across all the classes
+    """
     scores = []
     idxes = y_trues.shape[1]
     for i in range(idxes):
@@ -18,17 +27,26 @@ def MCRMSE(y_trues, y_preds):
     mcrmse_score = np.mean(scores)
     return mcrmse_score, scores
 def timeSince(since, percent):
+    """
+    Calculates the time passed.
+    """
     now = time.time()
     s = now - since
     es = s / (percent)
     rs = es - s
     return f'{str(asMinutes(s))} (remain {str(asMinutes(rs))})'
 def asMinutes(s):
+    """
+    Converts seconds to minutes
+    """
     m = math.floor(s / 60)
     s -= m * 60
     return f'{int(m)}m {int(s)}s'
 
 class RMSELoss(nn.Module):
+    """
+    Calculates the RMSE loss of the model give, predictions and the inputs
+    """
     def __init__(self, reduction = 'mean', eps = 1e-9):
         super().__init__()
         self.mse = nn.MSELoss(reduction = 'none')
@@ -51,6 +69,9 @@ def get_score(y_trues, y_preds):
 
 
 class AverageMeter(object):
+    """
+    Used for calculating the average and maintaing a moving average across epochs as a dictionary.
+    """
     def __init__(self):
         self.reset()
         
@@ -67,7 +88,15 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 def prepare_input(vars,text):
+    """_summary_
 
+    Args:
+        vars (config): configuration of model
+        text (str): Text to be tokenized
+
+    Returns:
+        list: list of encoded tokens
+    """
     inputs = vars.tokenizer.encode_plus(
         text,
         return_tensors = None,
@@ -80,6 +109,14 @@ def prepare_input(vars,text):
         inputs[k] = torch.tensor(v, dtype = torch.long)
     return inputs   
 def collate(inputs):
+    """
+
+    Args:
+        inputs (List): encoded tokens
+
+    Returns:
+        Generates the attention mask for the input
+    """
     mask_len = int(inputs['attention_mask'].sum(axis = 1).max())
     for k, v in inputs.items():
         inputs[k] = inputs[k][:, :mask_len]
@@ -90,6 +127,9 @@ def collate(inputs):
 
 
 class AttentionPooling(nn.Module):
+    """_
+    Generates attention pooling and converts (L,H) to H dimension using attention based mechanism
+    """
     def __init__(self, in_dim):
         super().__init__()
         self.attention = nn.Sequential(
@@ -109,6 +149,10 @@ class AttentionPooling(nn.Module):
         return attention_embeddings
 
 class MeanPooling(nn.Module):
+
+    """
+    Takes mean based pooling across the outputs of the last layer going from (L,H) to H
+    """
     def __init__(self):
         super(MeanPooling, self).__init__()
         
@@ -126,4 +170,12 @@ class MeanPooling(nn.Module):
         return mean_embeddings
 
 def round_off_point_5(number):
+    """_summary_
+
+    Args:
+        number (float): Number to be rounded.
+
+    Returns:
+        float: rounded number to neares 0.5 3.33->3.5, 4.26->4.5
+    """
     return round(number * 2) / 2

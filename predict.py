@@ -14,6 +14,15 @@ coh,sy,voc,phr,gr,con=[],[],[],[],[],[]
 text_ids=[]
 
 def op_to_submission(df,predictions):
+    """Converts the output from our model to submission format for the competition
+
+    Args:
+        df (pd.DataFrame): Test Dataset to perform predictions on.
+        predictions (List): List of predictions from model output
+
+    Returns:
+        pd.DataFrame: A Dataframe for final submission
+    """
     for i in range(len(predictions)):
         pred=predictions[i][0]
         # pred=[round_off_point_5(num) for num in pred]
@@ -43,7 +52,7 @@ if __name__=="__main__":
     args = parser.parse_args()
     model_path=args.model_path
     model=args.model    
-    df_test=pd.read_csv("data/train.csv").reset_index(drop = True)
+    df_test=pd.read_csv(args.test_path).reset_index(drop = True)
     criterion=RMSELoss()
     losses=AverageMeter()
     vars.mod_pre=args.model

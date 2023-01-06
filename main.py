@@ -22,7 +22,7 @@ from model import DebertaModel,LSTM_regr,DistillBERTClass,MetaModel
 import logging
 from predict import op_to_submission
 
-
+## Argument parsing
 parser = argparse.ArgumentParser(description='Training File')
 
 parser.add_argument('--train_file_path',  type=str,
@@ -33,8 +33,7 @@ parser.add_argument('--epochs',  type=int,
                     help='Number of epochs',required=True)
 parser.add_argument('--logging_file_name',  type=str,
                     help='Number of epochs',required=True)
-# parser.add_argument('--test_path',  type=str,
-#                     help='path to test file',required=True)
+
 
 args = parser.parse_args()
 
@@ -54,6 +53,12 @@ if(not vars.debug):
         logging.basicConfig(filename=args.logging_file_name, level=logging.INFO)
 logging.info(vars.__dict__)
 def kFold(k=5):
+    """_summary_
+
+    Args:
+        k (int, optional): Number of folds. Defaults to 5.
+        Assigns fold according to stratification
+    """
        
     Fold = MultilabelStratifiedKFold(n_splits = k, shuffle = True, random_state = vars.cross_cv_seed)
     for n, (train_index, val_index) in enumerate(Fold.split(vars.train,vars.train[vars.target_cols])):
@@ -63,6 +68,21 @@ def kFold(k=5):
 kFold(vars.folds)
 # print(vars.train.fold.value_counts())
 def train_fn(fold, train_loader, model, criterion, optimizer, epoch, scheduler, device):
+    """
+
+    Args:
+        fold (int): fold being used for validation
+        train_loader (utils.data.DataLoader): DataLoader for training data
+        model (nn.Module): Model for training
+        criterion (nn.RMSELoss): Objective/Loss function to optimize on
+        optimizer (torch.optim): Optimizer used for updating weights
+        epoch (int): Epoch used for training
+        scheduler (torch.optim.lr_scheduler): Scheduler used for decaying the learning rate
+        device (torch.device): GPU/CPU device to perform calculations on
+
+    Returns:
+        losses.avg (Average loss): Dictionary of AverageMeter Class,
+    """
     losses = AverageMeter()
     model.train()
 
@@ -106,6 +126,19 @@ def train_fn(fold, train_loader, model, criterion, optimizer, epoch, scheduler, 
 
 
 def valid_fn(valid_loader, model, criterion, device):
+    """
+    Iterates over the entire validation dataset and calculates the loss and prediction
+    Args:
+    
+        valid_loader (utils.data.DataLoader): DataLoader for validation data
+        model (nn.Module): Model that has been trained and has to be used for validation
+        criterion (nn.RMSELoss): Objective/Loss function to optimize on
+        device (torch.device): GPU/CPU device to perform calculations on
+
+    Returns:
+        losses.avg (Average loss): Dictionary of AverageMeter Class,
+        preds: Prediction on the validation data.
+    """
     losses = AverageMeter()
     model.eval()
     preds = []
@@ -137,6 +170,13 @@ def valid_fn(valid_loader, model, criterion, device):
     return losses.avg, np.concatenate(preds)
 
 def test_fn(model):
+    """
+    Iterates over the entire test dataset and calculaets he predictions and converts it to a csv.
+    Args:
+        model (nn.Module): Model that has been trained and has to be used for Testing
+    Returns:
+        op: pd.DataFrame: A DataFrame with all six columns, predictions for all the six parameters
+    """
     df_test=pd.read_csv("data/test.csv")
     model.eval()
     test_dataset = ELLDataset(vars,df_test,False)
@@ -165,6 +205,19 @@ def test_fn(model):
     return op
 
 def train_loop(folds, fold):
+    """
+    Runs the training and validation on each fold of the DataFrame
+    
+    Args:
+        folds: pd.DataFrame: The main training data to train on
+
+    Returns:
+        best_train_loss (float): Best Training Loss
+        best_val_loss (float) : Best Validation loss
+        valid_folds (int): Validation fold to perform validation on
+        pd.concat([df_epoch, df_scores],axis = 1) (pd.DataFrame):concatenated score over each epoch.
+        df_tests (pd.DataFrame): Test Dataset to perform testing on.
+    """
     # print(folds.info())
     train_folds = folds[folds['fold'] != fold].reset_index(drop = True)
     valid_folds = folds[folds['fold'] == fold].reset_index(drop = True)
@@ -286,6 +339,9 @@ def train_loop(folds, fold):
     return best_train_loss, best_val_loss, valid_folds, pd.concat([df_epoch, df_scores],axis = 1),df_tests
 
 def run_training():
+    """
+    Performs training and validation across folds. Main controller function.
+    """
     train_losses=[]
     val_losses=[]
     folds=[]

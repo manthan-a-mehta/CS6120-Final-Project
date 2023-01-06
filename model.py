@@ -19,21 +19,18 @@ class DebertaModel(nn.Module):
         self.config.hidden_dropout_prob = 0.
         self.config.attention_dropout = 0.
         self.config.attention_probs_dropout_prob = 0
-        
-        
-        #Backbone
         self.model = AutoModel.from_pretrained("roberta-base", config=self.config)
-        
-            
-         
-        # Last Fully Connected
         self.fc = nn.Linear(self.config.hidden_size, 6)
         self._init_weights(self.fc)
-        # Average Pooling Layer
         self.pool = MeanPooling()
 
         
     def _init_weights(self, module):
+        """Initializes the weights for a particular layer of the network
+
+        Args:
+            module (nn.Module): Layer that needs initialization
+        """
         if isinstance(module, nn.Linear):
             
             module.weight.data = nn.init.xavier_uniform_(module.weight.data)
@@ -54,17 +51,30 @@ class DebertaModel(nn.Module):
             module.weight.data.fill_(1.0)
     
     def feature(self, inputs):
-        outputs = self.model(**inputs)
-  
+        """Converts inputs into a feature of hidden size  by forward passing through transformer and
+        pooling over the last hidden state over the length dimension. Gives an output of 768 dimensions.
 
+        Args:
+            inputs (tokenizer.BatchEncoding: dictionary with input_ids and attention mask
+
+        Returns:
+            feature(torch.Tensor): B*C dimension tensor which is a pooled hidden state over the last hidden state.
+        """
+        
+        outputs = self.model(**inputs)
         last_hidden_states = outputs[0]
-        # sys.exit()
         feature = self.pool(last_hidden_states, inputs['attention_mask'])
-      
-            
         return feature
     
     def forward(self, inputs):
+        """
+        Forward Pass on DebertaModel
+        Args:
+            inputs (torch.Tensor): BxLxC tensor.
+
+        Returns:
+            torch.Tensor: output of size 6 corresponding to output of the model
+        """
      
         feature = self.feature(inputs)        
         outout = self.fc(feature)
@@ -80,6 +90,14 @@ class LSTM_regr(torch.nn.Module) :
         self.fc=nn.Linear(hidden_dim,6)
         
     def forward(self, x):
+        """
+        Forward Pass on DebertaModel
+        Args:
+            x (torch.Tensor): BxLxC tensor.
+
+        Returns:
+            torch.Tensor: output of size 6 corresponding to output of the model
+        """
         x=x["input_ids"]
         x = self.embeddings(x)
         x = self.dropout(x)
@@ -96,6 +114,14 @@ class DistillBERTClass(torch.nn.Module):
         self.pool = AttentionPooling(768)
 
     def forward(self, inputs):
+        """
+        Forward Pass on DistillBertModel
+        Args:
+            inputs (torch.Tensor): BxLxC tensor.
+
+        Returns:
+            torch.Tensor: output of size 6 corresponding to output of the model
+        """
         output_1 = self.l1(**inputs)
         last_hidden_states = output_1[0]
         pooler = self.pool(last_hidden_states, inputs['attention_mask'])
@@ -115,6 +141,14 @@ class MetaModel(torch.nn.Module):
         self.weights=nn.Parameter(torch.tensor([0.333,0.333,0.334]))
     
     def forward(self,inputs):
+        """
+        Forward Pass on Meta Model
+        Args:
+            inputs (torch.Tensor): BxLxC tensor.
+
+        Returns:
+            torch.Tensor: output of size 6 corresponding to weighted sum of outputs from each model
+        """
         # Distillbert is the most powerfull
         output1=self.Model1(inputs)
         output2=self.Model2(inputs)
@@ -133,6 +167,14 @@ class ElectraModel(torch.nn.Module):
         self.pool = AttentionPooling(768)
 
     def forward(self, inputs):
+        """
+        Forward Pass on Electra Model
+        Args:
+            inputs (torch.Tensor): BxLxC tensor.
+
+        Returns:
+            torch.Tensor: output of size 6 corresponding to output of the model
+        """
         output_1 = self.l1(**inputs)
         last_hidden_states = output_1[0]
         pooler = self.pool(last_hidden_states, inputs['attention_mask'])

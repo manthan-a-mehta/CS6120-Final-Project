@@ -1,6 +1,9 @@
 from transformers import AutoTokenizer,DistilBertTokenizer
 import json
 class Config():
+    """
+    Sets the basic parameters needed for training the model. Setup all the parameters carefully.
+    """
     def __init__(self,df_train):
         self.unique_string="distil_cased"
         self.target_cols=['cohesion', 'syntax', 'vocabulary', 'phraseology', 'grammar', 'conventions']
@@ -10,7 +13,7 @@ class Config():
         self.tokenizer=AutoTokenizer.from_pretrained("distilbert-base-cased")
         self.dot_token=self.tokenizer .convert_tokens_to_ids(["."])
         self.train=df_train
-        self.output_dir="/home/balaji/manthan/ELL/outputs/"
+        self.output_dir="/home/balaji/manthan/ELL/CS6120-final-project/outputs"
         self.hidden_dim=768
         self.loss_func="RMSE"
         self.batch_size=16
